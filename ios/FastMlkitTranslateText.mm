@@ -65,30 +65,55 @@ RCT_EXPORT_METHOD(downloadLanguageModel:(NSString *)lang resolve:(RCTPromiseReso
     MLKModelDownloadConditions *conditions = [[MLKModelDownloadConditions alloc]
                                               initWithAllowsCellularAccess:YES
                                               allowsBackgroundDownloading:YES];
-    id successObserver = [NSNotificationCenter.defaultCenter addObserverForName:MLKModelDownloadDidSucceedNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-        if(notification.userInfo == nil) {
-            [self handleRemoveObserver:lang withType:@"success"];
-            return;
+
+    __weak __typeof(self) weakSelf = self;
+
+    id successObserver = [NSNotificationCenter.defaultCenter
+        addObserverForName:MLKModelDownloadDidSucceedNotification
+        object:nil
+        queue:nil
+        usingBlock:^(NSNotification * _Nonnull notification) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+
+            // Checking that the model is of the correct type
+            MLKRemoteModel *remoteModel = notification.userInfo[MLKModelDownloadUserInfoKeyRemoteModel];
+            if ([remoteModel isKindOfClass:[MLKTranslateRemoteModel class]]) {
+                MLKTranslateRemoteModel *translateModel = (MLKTranslateRemoteModel *)remoteModel;
+                if ([translateModel.language isEqualToString:lang]) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        resolve(@1);
+                    });
+                    [strongSelf handleRemoveObserver:lang withType:@"success"];
+                }
+            }
         }
-        MLKTranslateRemoteModel *downloadModel = notification.userInfo[MLKModelDownloadUserInfoKeyRemoteModel];
-        if([model isKindOfClass:[MLKTranslateRemoteModel class]] && downloadModel == model) {
-            //download success
-            resolve(@1);
-        }
-        [self handleRemoveObserver:lang withType:@"success"];
-    }];
+    ];
     [downloadObservers setValue: successObserver forKey: [NSString stringWithFormat:@"%@-%@", lang, @"success"]];
-    id failObserver = [NSNotificationCenter.defaultCenter addObserverForName:MLKModelDownloadDidFailNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
-        if(notification.userInfo == nil) {
-            [self handleRemoveObserver:lang withType:@"fail"];
-            return;
+
+    id failObserver = [NSNotificationCenter.defaultCenter
+        addObserverForName:MLKModelDownloadDidFailNotification
+        object:nil
+        queue:nil
+        usingBlock:^(NSNotification * _Nonnull notification) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+
+            NSError *error = notification.userInfo[MLKModelDownloadUserInfoKeyError];
+            MLKRemoteModel *errorModel = error.userInfo[MLKModelDownloadUserInfoKeyRemoteModel];
+
+            // Checking the model type in the error
+            if ([errorModel isKindOfClass:[MLKTranslateRemoteModel class]]) {
+                MLKTranslateRemoteModel *translateErrorModel = (MLKTranslateRemoteModel *)errorModel;
+                if ([translateErrorModel.language isEqualToString:lang]) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        reject(CODE_DOWNLOAD_FAIL, error.localizedDescription, error);
+                    });
+                    [strongSelf handleRemoveObserver:lang withType:@"fail"];
+                }
+            }
         }
-        NSError *error = notification.userInfo[MLKModelDownloadUserInfoKeyError];
-        if(error != nil) {
-            reject(CODE_DOWNLOAD_FAIL, error.localizedDescription, nil);
-        }
-        [self handleRemoveObserver:lang withType:@"fail"];
-    }];
+    ];
     [downloadObservers setValue: failObserver forKey: [NSString stringWithFormat:@"%@-%@", lang, @"fail"]];
     progress = [[MLKModelManager modelManager] downloadModel:model conditions:conditions];
     
