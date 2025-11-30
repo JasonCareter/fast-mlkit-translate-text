@@ -35,6 +35,14 @@ Key capabilities
 - Dynamic model management Keep on-device storage requirements low by dynamically downloading and managing language packs.
 - Runs on the device Translations are performed quickly, and don't require you to send users' text to a remote server.
 
+## Requirements
+
+- React Native 0.71+
+- Android: Gradle 8.7+, JDK 17+, compileSdkVersion 35+
+- iOS: Xcode 15+, iOS 13.0+
+
+This library supports Android 15's 16 KB page size requirement.
+
 ## Installation
 
 > yarn add fast-mlkit-translate-text

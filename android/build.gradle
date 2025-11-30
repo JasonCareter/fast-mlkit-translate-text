@@ -7,7 +7,7 @@ buildscript {
 	gradlePluginPortal()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.4")
+        classpath("com.android.tools.build:gradle:8.5.1")
     }
 }
 
@@ -21,11 +21,11 @@ if (isNewArchitectureEnabled()) {
 }
 
 android {
-    compileSdkVersion safeExtGet('compileSdkVersion', 31)
+    compileSdkVersion safeExtGet('compileSdkVersion', 35)
 
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 21)
-        targetSdkVersion safeExtGet('targetSdkVersion', 31)
+        targetSdkVersion safeExtGet('targetSdkVersion', 35)
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
     }
 
@@ -54,8 +54,8 @@ dependencies {
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
-  implementation 'com.google.mlkit:translate:17.0.2'
-  implementation 'com.google.mlkit:language-id:17.0.4'
+  implementation 'com.google.mlkit:translate:17.0.3'
+  implementation 'com.google.mlkit:language-id:17.0.6'
 }
 
 if (isNewArchitectureEnabled()) {
